@@ -25,5 +25,5 @@ sources:
 home:
 dependencies:
 - name: cilium
-  version: "1.15.3"
+  version: "1.15.4"
   repository: "https://helm.cilium.io"
