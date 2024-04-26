@@ -75,7 +75,7 @@ spec:
                 path: client.crt
         - name: tetragon-log-data
           hostPath:
-            path: /var/run/cilium/tetragon/
+            path: /var/run/cilium/tetragon
             type: DirectoryOrCreate
         - name: etc-cni-netd
           mountPath: {{ .Values.cni.hostConfDirMountPath }}
