@@ -18,7 +18,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: rampart-agent-daemonset
-  namespace: kube-system # WARNING: runs in privileged namespace #
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
@@ -29,10 +29,10 @@ spec:
         app: rampart-agent
     spec:
       containers:
-      - image: rampartai/rampart-crs:0.0.6 #rampart-crs:latest
+      - image: rampartai/rampart-crs:0.0.8
         name: rampart-agent-container
         command: ['/bin/sh']
-        args: ['-c', 'ls -lia /agent && echo $CLIENT_CERT_PASS && whoami && base64 /agent/client.crt && java -Drampart.trust.pass=$CLIENT_CERT_PASS -jar jars/auditd-sensor.jar'] #java -jar /agent/auditd-sensor.jar
+        args: ['-c', 'ls -lia /agent && echo $CLIENT_CERT_PASS && whoami && base64 /agent/client.crt && java -Drampart.trust.pass=$CLIENT_CERT_PASS -jar jars/auditd-sensor.jar']
         env:
         - name: CLIENT_CERT_PASS
           valueFrom:
@@ -48,6 +48,24 @@ spec:
             readOnly: true
           - name: tetragon-log-data
             mountPath: /var/log/crate/tetragon
+#      nodeSelector:
+#        {{- toYaml . | nindent 8 }}
+      {{- if .Values.cni.install }}
+      lifecycle:
+        {{- if ne .Values.cni.chainingMode "aws-cni" }}
+        postStart:
+          exec:
+            command:
+            - "bash"
+            - "-c"
+            - |
+              {{- tpl (.Files.Get "files/agent/poststart-eni.bash") . | nindent 20 }}
+        {{- end }}
+        preStop:
+          exec:
+            command:
+            - /cni-uninstall.sh
+      {{- end }}
       volumes: #tetragon logs are host mounted @ /var/run/cilium/tetragon/tetragon.log -> /var/log/crate/tetragon/tetragon.log
         - name: client-cert
           secret:
@@ -59,3 +77,10 @@ spec:
           hostPath:
             path: /var/run/cilium/tetragon/
             type: DirectoryOrCreate
+        - name: etc-cni-netd
+          mountPath: {{ .Values.cni.hostConfDirMountPath }}
+        {{- if .Values.cni.configMap }}
+        - name: cni-configuration
+          mountPath: {{ .Values.cni.confFileMountPath }}
+          readOnly: true
+        {{- end }}
