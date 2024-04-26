@@ -12,10 +12,79 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# -------------------------------
+# -----------------------------------------------------------------------------
 
 # -- base64 encoded PEM values for the Rampart polyglot server certificate and private key
 rampart:
   server:
     cert: ""
     key: ""
+# -- Node selector for rampart-agent.
+nodeSelector:
+  kubernetes.io/os: linux
+cni:
+  # -- Install the CNI configuration and binary files into the filesystem.
+  install: true
+
+  # -- Remove the CNI configuration and binary files on agent shutdown. Enable this
+  # if you're removing Cilium from the cluster. Disable this to prevent the CNI
+  # configuration file from being removed during agent upgrade, which can cause
+  # nodes to go unmanageable.
+  uninstall: false
+
+  # -- Configure chaining on top of other CNI plugins. Possible values:
+  #  - none
+  #  - aws-cni
+  #  - flannel
+  #  - generic-veth
+  #  - portmap
+  chainingMode: ~
+
+  # -- A CNI network name in to which the Cilium plugin should be added as a chained plugin.
+  # This will cause the agent to watch for a CNI network with this network name. When it is
+  # found, this will be used as the basis for Cilium's CNI configuration file. If this is
+  # set, it assumes a chaining mode of generic-veth. As a special case, a chaining mode
+  # of aws-cni implies a chainingTarget of aws-cni.
+  chainingTarget: ~
+
+  # -- Make Cilium take ownership over the `/etc/cni/net.d` directory on the
+  # node, renaming all non-Cilium CNI configurations to `*.cilium_bak`.
+  # This ensures no Pods can be scheduled using other CNI plugins during Cilium
+  # agent downtime.
+  exclusive: true
+
+  # -- Configure the log file for CNI logging with retention policy of 7 days.
+  # Disable CNI file logging by setting this field to empty explicitly.
+  logFile: /var/run/rampart/rampart-cni.log
+
+  # -- Skip writing of the CNI configuration. This can be used if
+  # writing of the CNI configuration is performed by external automation.
+  customConf: false
+
+  # -- Configure the path to the CNI configuration directory on the host.
+  confPath: /etc/cni/net.d
+
+  # -- Configure the path to the CNI binary directory on the host.
+  binPath: /opt/cni/bin
+
+  # -- When defined, configMap will mount the provided value as ConfigMap and
+  # interpret the cniConf variable as CNI configuration file and write it
+  # when the agent starts up
+  # configMap: cni-configuration
+
+  # -- Configure the key in the CNI ConfigMap to read the contents of
+  # the CNI configuration from.
+  configMapKey: cni-config
+
+  # -- Configure the path to where to mount the ConfigMap inside the agent pod.
+  confFileMountPath: /tmp/cni-configuration
+
+  # -- Configure the path to where the CNI configuration directory is mounted
+  # inside the agent pod.
+  hostConfDirMountPath: /host/etc/cni/net.d
+
+  # -- Specifies the resources for the cni initContainer
+  resources:
+    requests:
+      cpu: 100m
+      memory: 10Mi
