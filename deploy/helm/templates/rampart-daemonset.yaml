@@ -29,7 +29,7 @@ spec:
         app: rampart-agent
     spec:
       containers:
-      - image: rampartai/rampart-crs:0.0.8
+      - image: rampartai/rampart-crs:0.0.9
         name: rampart-agent-container
         command: ['/bin/sh']
         args: ['-c', 'ls -lia /agent && echo $CLIENT_CERT_PASS && whoami && base64 /agent/client.crt && java -Drampart.trust.pass=$CLIENT_CERT_PASS -jar jars/auditd-sensor.jar']
